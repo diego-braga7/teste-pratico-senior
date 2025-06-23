@@ -8,6 +8,7 @@ class PublicQuizController extends BaseController
 {
     public function show(Request $req): Response
     {
+        $this->getLogger()->info("teste");
         $id = $req->params['id'];
         // carregar quiz com perguntas e alternativas...
         return new Response([

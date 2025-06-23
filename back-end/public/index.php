@@ -6,9 +6,27 @@ error_reporting(E_ALL);
 // Autoloader (PSR-4 ou require manual)
 require __DIR__ . '/../vendor/autoload.php';
 
+
 use Src\Router;
 use Src\Request;
 use Src\Response;
+use Dotenv\Dotenv;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+use Src\LoggerFactory;
+    
+$dotenv = Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
+
+
+$monolog = new Logger('system');
+$logPath = __DIR__ . '/../storage/logs/system.log';
+$monolog->pushHandler(new StreamHandler($logPath, Logger::DEBUG));
+
+
+LoggerFactory::setLogger($monolog);
+
+LoggerFactory::getLogger()->info("inicializado o log");
 
 // Cria router e registra rotas
 $router = new Router();

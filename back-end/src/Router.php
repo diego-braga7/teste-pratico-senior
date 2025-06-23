@@ -1,8 +1,12 @@
 <?php
 namespace Src;
 
+use Src\Service\LogTrait;
+
 class Router
 {
+    use LogTrait;
+
     private $routes = [];
     private $middlewareMap = [];
 
@@ -45,6 +49,7 @@ class Router
                 return $controller->$method($req);
             }
         }
+        $this->getLogger("passou");
         return new Response('Not Found', 404);
     }
 }

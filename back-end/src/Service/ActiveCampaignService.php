@@ -1,11 +1,17 @@
 <?php
 namespace Src\Service;
 
-class ActiveCampaignService
+class ActiveCampaignService extends BaseService
 {
-    private $apiUrl   = 'https://developertihee.api-us1.com';
-    private $apiKey   = '732beccc0ae9428e8cf5e4c16fc392ad7db34fbf0066aeddf36b01012324b720354e3772';
-    private $listId   = 'SEU_LIST_ID';
+    private string $apiUrl;
+    private string $apiKey;
+    private string $listId;
+
+    public function __construct() {
+        $this->apiUrl = getenv('AC_API_URL');
+        $this->apiKey = getenv('AC_API_KEY');
+        $this->listId = getenv('AC_LIST_ID');
+    }
 
     public function addContact(string $name, string $email)
     {
