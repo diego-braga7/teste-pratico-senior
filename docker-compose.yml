@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  php-back-end:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: php-back-end
+    ports:
+      - "8080:80"          # host:container
+    volumes:
+      - ./back-end:/var/www/html
+    restart: unless-stopped
+    networks:
+      - php-network
+
+networks:
+  php-network:
+    driver: bridge
