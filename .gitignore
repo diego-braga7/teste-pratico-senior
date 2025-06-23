@@ -1,0 +1,4 @@
+back-end/.env
+back-end/vendor
+back-end/storage/*
+back-end/composer.lock

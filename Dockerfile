@@ -40,9 +40,16 @@ COPY php.ini /usr/local/etc/php/php.ini
 # 5) Copia todo o código para dentro do container
 COPY back-end/ /var/www/html/
 
-# 6) Ajusta permissões
+# copia o entrypoint e dá permissão de execução
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# ajusta o entrypoint e mantém o CMD original para subir o Apache
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["apache2-foreground"]
+# 7) Ajusta permissões
 RUN chown -R www-data:www-data /var/www/html \
   && chmod -R 755 /var/www/html
 
-# 7) Expõe a porta 80 para HTTP
+# 8) Expõe a porta 80 para HTTP
 EXPOSE 80
