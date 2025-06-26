@@ -8,4 +8,5 @@ trait LogTrait{
     public function getLogger() : LoggerInterface{
         return LoggerFactory::getLogger();
     }
+
 }

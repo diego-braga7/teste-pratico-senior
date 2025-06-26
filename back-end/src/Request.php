@@ -1,17 +1,91 @@
 <?php
 namespace Src;
+
+use Src\Service\LogTrait;
+
 class Request
 {
-    public $method;
-    public $uri;
-    public $body;
-    public $params = [];
+    use LogTrait;
 
-    public static function capture(): self { /* popula method, uri, body */ 
-    return new self;
+    public string $method;
+    public string $uri;
+    public array $query = [];
+    public array $body  = [];
+    public array $params = [];
+    public array $headers = [];
+
+    private function __construct() {}
+
+    
+    public static function capture(): self
+    {
+        $req = new self();
+
+        $req->method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+        $path = $_SERVER['REQUEST_URI'] ?? '/';
+        $path = parse_url($path, PHP_URL_PATH);
+        $req->uri = rtrim($path, '/') ?: '/';
+
+        foreach ($_SERVER as $key => $value) {
+            if (str_starts_with($key, 'HTTP_')) {
+                $name = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))));
+                $req->headers[$name] = $value;
+            }
+        }
+
+        $rawGet = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
+        $req->query = self::sanitize($rawGet);
+        
+        if (in_array($req->method, ['POST', 'PUT', 'PATCH'], true)) {
+            $contentType = $req->headers['Content-Type'] ?? '';
+            if (str_contains($contentType, 'application/json')) {
+                $json = file_get_contents('php://input');
+                $data = json_decode($json, true) ?: [];
+                $req->body = self::sanitize($data);
+            } else {
+                $rawPost = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
+                $req->body = self::sanitize($rawPost);
+            }
+        }   
+
+        return $req;
     }
 
-    public function matches(string $routePath): bool {
-    return true;    
-    /* compara URI e extrai params */ }
+    
+    public function matches(string $routePath): bool
+    {
+        // transforma /users/{id} em regex com named groups
+        $pattern = preg_replace_callback(
+            '/\{(\w+)\}/',
+            fn($m) => '(?P<' . $m[1] . '>[^\/]+)',
+            $routePath
+        );
+        $pattern = '#^' . rtrim($pattern, '/') . '/?$#';
+
+        if (preg_match($pattern, $this->uri, $matches)) {
+            foreach ($matches as $key => $value) {
+                if (is_string($key)) {
+                    $this->params[$key] = $value;
+                }
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+   
+    private static function sanitize(array|string $data): array|string
+    {
+        if (is_array($data)) {
+            $clean = [];
+            foreach ($data as $key => $value) {
+                $clean[$key] = self::sanitize($value);
+            }
+            return $clean;
+        }
+
+        return trim(filter_var($data, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    }
 }
