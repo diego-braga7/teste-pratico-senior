@@ -1,12 +1,11 @@
 <?php
+
 namespace Src;
 
-use Src\Service\LogTrait;
+use Monolog\Logger;
 
 class Request
 {
-    use LogTrait;
-
     public string $method;
     public string $uri;
     public array $query = [];
@@ -16,27 +15,41 @@ class Request
 
     private function __construct() {}
 
-    
+    /**
+     * Captura a requisição HTTP de forma segura,
+     * sanitizando inputs e incluindo Content-Type.
+     */
     public static function capture(): self
     {
         $req = new self();
 
+        // Método HTTP
         $req->method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
+        // URI limpa (sem query string)
         $path = $_SERVER['REQUEST_URI'] ?? '/';
         $path = parse_url($path, PHP_URL_PATH);
         $req->uri = rtrim($path, '/') ?: '/';
 
+        LoggerFactory::getLogger()->info("_SERVER", $_SERVER);
+
+        // Cabeçalhos HTTP (inclui HTTP_*, CONTENT_TYPE e CONTENT_LENGTH)
         foreach ($_SERVER as $key => $value) {
             if (str_starts_with($key, 'HTTP_')) {
                 $name = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))));
                 $req->headers[$name] = $value;
-            }
+            } elseif ($key === 'CONTENT_TYPE') {
+                $req->headers['Content-Type'] = $value;
+            } elseif ($key === 'CONTENT_LENGTH') {
+                $req->headers['Content-Length'] = $value;
+            } 
         }
 
+        // Query params (GET) — sanitizados
         $rawGet = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
         $req->query = self::sanitize($rawGet);
-        
+
+        // Body (POST, PUT, PATCH)
         if (in_array($req->method, ['POST', 'PUT', 'PATCH'], true)) {
             $contentType = $req->headers['Content-Type'] ?? '';
             if (str_contains($contentType, 'application/json')) {
@@ -47,15 +60,17 @@ class Request
                 $rawPost = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
                 $req->body = self::sanitize($rawPost);
             }
-        }   
+        }
 
         return $req;
     }
 
-    
+    /**
+     * Verifica se a URI bate com a rota informada,
+     * extraindo parâmetros nomeados ({id}, {slug}, etc).
+     */
     public function matches(string $routePath): bool
     {
-        // transforma /users/{id} em regex com named groups
         $pattern = preg_replace_callback(
             '/\{(\w+)\}/',
             fn($m) => '(?P<' . $m[1] . '>[^\/]+)',
@@ -75,7 +90,10 @@ class Request
         return false;
     }
 
-   
+    /**
+     * Sanitiza recursivamente strings e arrays,
+     * aplicando FILTER_SANITIZE_FULL_SPECIAL_CHARS.
+     */
     private static function sanitize(array|string $data): array|string
     {
         if (is_array($data)) {
