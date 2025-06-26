@@ -3,9 +3,16 @@ namespace Src\Controller;
 
 use Src\Request;
 use Src\Response;
+use Src\Service\QuizService;
+use Src\Validator\QuizValidator;
 
 class QuizController extends BaseController
 {
+    private QuizService $service;
+
+    public function __construct() {
+       $this->service = new QuizService((new QuizValidator));
+    }
     public function index(Request $req): Response
     {
         // listar quizzes (mock)
@@ -20,6 +27,7 @@ class QuizController extends BaseController
     {
         $data = $req->body; // título, perguntas...
         // validar e criar quiz...
+        $this->service->createQuiz($data['title'], $data['question']);
         return new Response(['message'=>'Quiz created'], 201);
     }
 

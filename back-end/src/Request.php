@@ -1,8 +1,5 @@
 <?php
-
 namespace Src;
-
-use Monolog\Logger;
 
 class Request
 {
@@ -17,7 +14,7 @@ class Request
 
     /**
      * Captura a requisição HTTP de forma segura,
-     * sanitizando inputs e incluindo Content-Type.
+     * sanitizando inputs e incluindo todos os headers, mesmo Authorization.
      */
     public static function capture(): self
     {
@@ -31,9 +28,14 @@ class Request
         $path = parse_url($path, PHP_URL_PATH);
         $req->uri = rtrim($path, '/') ?: '/';
 
-        LoggerFactory::getLogger()->info("_SERVER", $_SERVER);
+        // Captura todos os headers (inclui Authorization)
+        if (function_exists('getallheaders')) {
+            foreach (getallheaders() as $name => $value) {
+                $req->headers[$name] = $value;
+            }
+        }
 
-        // Cabeçalhos HTTP (inclui HTTP_*, CONTENT_TYPE e CONTENT_LENGTH)
+        // Fallback para servidores que não suportam getallheaders
         foreach ($_SERVER as $key => $value) {
             if (str_starts_with($key, 'HTTP_')) {
                 $name = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))));
@@ -42,7 +44,7 @@ class Request
                 $req->headers['Content-Type'] = $value;
             } elseif ($key === 'CONTENT_LENGTH') {
                 $req->headers['Content-Length'] = $value;
-            } 
+            }
         }
 
         // Query params (GET) — sanitizados
@@ -52,7 +54,7 @@ class Request
         // Body (POST, PUT, PATCH)
         if (in_array($req->method, ['POST', 'PUT', 'PATCH'], true)) {
             $contentType = $req->headers['Content-Type'] ?? '';
-            if (str_contains($contentType, 'application/json')) {
+            if (stripos($contentType, 'application/json') === 0) {
                 $json = file_get_contents('php://input');
                 $data = json_decode($json, true) ?: [];
                 $req->body = self::sanitize($data);

@@ -41,7 +41,8 @@ class AuthService
         }
 
         // Compare provided password (MD5) with stored hash
-        if (md5($senha) !== $storedHash) {
+        // if (md5($senha) !== $storedHash) {
+        if ($senha !== $storedHash) {
             throw new InvalidArgumentException('senha inválida');
         }
 
@@ -61,6 +62,7 @@ class AuthService
      */
     protected function getSavedPasswordHash(string $email): ?string
     {
+        return 'asajisa';
         // TODO: Implement user lookup against a data source.
 
         // Temporary stub: no user found
