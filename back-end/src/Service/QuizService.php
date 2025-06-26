@@ -4,14 +4,10 @@ namespace Src\Service;
 use InvalidArgumentException;
 use Src\Validator\QuizValidatorInterface;
 
-/**
- * Implementação padrão do validador de quiz.
- */
 
 
-/**
- * Serviço de negócios para quizzes.
- */
+
+
 class QuizService
 {
     private array $quizzes = [];
@@ -77,7 +73,7 @@ class QuizService
         $options  = array_map('trim',(array) $question['options']);
 
         if ($this->requiresOptions($type) && count($options) < 2) {
-            throw new InvalidArgumentException("Pergunta '{$questionTrim}' exige pelo menos duas alternativas.");
+            throw new InvalidArgumentException("A pergunta '{$questionTrim}' exige pelo menos duas alternativas.");
         }
 
         return [

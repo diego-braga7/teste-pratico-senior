@@ -3,6 +3,7 @@
 namespace Src\Validator;
 
 use InvalidArgumentException;
+use Src\LoggerFactory;
 
 class QuizValidator implements QuizValidatorInterface
 {
@@ -20,11 +21,11 @@ class QuizValidator implements QuizValidatorInterface
             throw new InvalidArgumentException('Deve existir ao menos uma pergunta.');
         }
 
-        foreach ($questions as $idx => $q) {
-            if (!isset($q['question'], $q['type'], $q['options'])
-                || !is_string($q['question'])
-                || !is_string($q['type'])
-                || !is_array($q['options'])
+        foreach ($questions as $idx => $question) {
+            if (!isset($question['question'], $question['type'], $question['options'])
+                || !is_string($question['question'])
+                || !is_string($question['type'])
+                || !is_array($question['options'])
             ) {
                 throw new InvalidArgumentException("Formato inválido na pergunta no índice {$idx}.");
             }

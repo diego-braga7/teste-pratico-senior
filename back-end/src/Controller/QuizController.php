@@ -1,4 +1,5 @@
 <?php
+
 namespace Src\Controller;
 
 use Src\Request;
@@ -10,46 +11,44 @@ class QuizController extends BaseController
 {
     private QuizService $service;
 
-    public function __construct() {
-       $this->service = new QuizService((new QuizValidator));
+    public function __construct()
+    {
+        $this->service = new QuizService((new QuizValidator));
     }
     public function index(Request $req): Response
     {
-        // listar quizzes (mock)
-        $quizzes = [
-            ['id'=>1, 'title'=>'Quiz 1'],
-            ['id'=>2, 'title'=>'Quiz 2'],
-        ];
+        $quizzes = $this->service->getAll();
+        if(empty($quiz)){
+            return new Response(null,404);
+        }
         return new Response($quizzes);
     }
 
     public function store(Request $req): Response
     {
-        $data = $req->body; // título, perguntas...
-        // validar e criar quiz...
-        $this->service->createQuiz($data['title'], $data['question']);
-        return new Response(['message'=>'Quiz created'], 201);
+        try {
+            $data = $req->body;
+            $quiz = $this->service->createQuiz($data['title'], $data['questions']);
+            return new Response([
+                'message' => 'Quiz created',
+                'id' => $quiz['id']
+            ], 201);
+        } catch (\Throwable $th) {
+            return new Response([
+                'error' => $th->getMessage()
+            ], 422);
+        }
     }
 
     public function show(Request $req): Response
     {
         $id = $req->params['id'];
-        // buscar quiz...
-        return new Response(['id'=>$id,'title'=>'Quiz Exemplo']);
+        $quiz = $this->service->getQuiz($id);
+        if(empty($quiz)){
+            return new Response(null,404);
+        }
+        return new Response($quiz);
     }
 
-    public function update(Request $req): Response
-    {
-        $id   = $req->params['id'];
-        $data = $req->body;
-        // atualizar quiz...
-        return new Response(['message'=>"Quiz {$id} updated"]);
-    }
-
-    public function destroy(Request $req): Response
-    {
-        $id = $req->params['id'];
-        // deletar quiz...
-        return new Response(null, 204);
-    }
+    
 }
