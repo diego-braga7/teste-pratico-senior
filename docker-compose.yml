@@ -21,6 +21,8 @@ services:
       context: .
       dockerfile: php-back-end/Dockerfile
     container_name: php-back-end
+    volumes:
+      - ./back-end:/var/www/html
     depends_on:
       - bd
     ports:

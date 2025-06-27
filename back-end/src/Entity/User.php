@@ -3,10 +3,7 @@ namespace Src\Entity;
 
 use DateTime;
 
-/**
- * Representa um usuário do sistema.
- */
-class User
+class User implements EntityInterface
 {
     private ?int $id = null;
     private string $username;

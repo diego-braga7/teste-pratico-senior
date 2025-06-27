@@ -3,6 +3,7 @@
 namespace Src\Controller;
 
 use Src\LoggerFactory;
+use Src\Repository\UserRepository;
 use Src\Request;
 use Src\Response;
 use Src\Service\ActiveCampaignService;
@@ -14,7 +15,7 @@ class AuthController extends BaseController
     private AuthService $service;
     public function __construct()
     {
-        $this->service = new AuthService((new EmailValidator()));
+        $this->service = new AuthService((new EmailValidator()), new UserRepository());
     }
     public function login(Request $request)
     {
