@@ -1,8 +1,11 @@
 <?php
 namespace Src\Service;
 
+use Src\LoggerFactory;
+
 class ActiveCampaignService extends BaseService
 {
+    
     private string $apiUrl;
     private string $apiKey;
     private string $listId;
@@ -15,6 +18,7 @@ class ActiveCampaignService extends BaseService
 
     public function addContact(string $name, string $email)
     {
+       try {
         $payload = [
             'contact' => [
                 'email' => $email,
@@ -42,6 +46,10 @@ class ActiveCampaignService extends BaseService
             return true;
         }
 
-        return "ActiveCampaign responded with HTTP {$code}";
+        $message = "ActiveCampaign responded with HTTP {$code}";
+        LoggerFactory::getLogger()->error($message);
+       } catch (\Throwable $th) {
+        LoggerFactory::getLogger()->error($th->getMessage());
+       }
     }
 }
