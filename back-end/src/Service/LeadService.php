@@ -18,25 +18,19 @@ class LeadService implements SplSubject
         $this->observers = new \SplObjectStorage();
     }
 
-    /**
-     * Anexa um observador.
-     */
+   
     public function attach(SplObserver $observer): void
     {
         $this->observers->attach($observer);
     }
 
-    /**
-     * Desanexa um observador.
-     */
+    
     public function detach(SplObserver $observer): void
     {
         $this->observers->detach($observer);
     }
 
-    /**
-     * Notifica todos os observadores.
-     */
+    
     public function notify(): void
     {
         foreach ($this->observers as $observer) {
