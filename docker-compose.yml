@@ -1,19 +1,37 @@
-version: '3.8'
+version: "3.8"
 
 services:
+  bd:
+    build:
+      context: ./bd
+      dockerfile: Dockerfile
+    container_name: bd
+    # Carrega todas as vars definidas em back-end/.env
+    env_file:
+      - back-end/.env
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"  
+    networks:
+      - app-network
+
   php-back-end:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: php-back-end/Dockerfile
     container_name: php-back-end
+    depends_on:
+      - bd
     ports:
-      - "8080:80"          # host:container
-    volumes:
-      - ./back-end:/var/www/html
-    restart: unless-stopped
+      - "8080:80"
     networks:
-      - php-network
+      - app-network
 
 networks:
-  php-network:
+  app-network:
     driver: bridge
+
+volumes:
+  db_data:
+    driver: local

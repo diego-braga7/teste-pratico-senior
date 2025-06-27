@@ -35,13 +35,13 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # 4) Copia o php.ini customizado
-COPY php.ini /usr/local/etc/php/php.ini
+COPY php-back-end/php.ini /usr/local/etc/php/php.ini
 
 # 5) Copia todo o código para dentro do container
 COPY back-end/ /var/www/html/
 
 # copia o entrypoint e dá permissão de execução
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY php-back-end/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # ajusta o entrypoint e mantém o CMD original para subir o Apache
