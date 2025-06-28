@@ -1,22 +1,28 @@
 <?php
-// Habilita exibição de erros (apenas dev)
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// Autoloader (PSR-4 ou require manual)
 require __DIR__ . '/../vendor/autoload.php';
 
 
 use Src\Router;
 use Src\Request;
-use Src\Response;
 use Dotenv\Dotenv;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Src\LoggerFactory;
-    
+
+
+$envPath = realpath(__DIR__ . '/..') . '/.env';
+
+if (!file_exists($envPath) || !is_readable($envPath)) {
+    throw new \RuntimeException(".env não encontrado ou sem permissão de leitura em: $envPath");
+}
+
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->load();
+$dotenv->required(['MYSQL_PASSWORD', 'MYSQL_USER', 'MYSQL_DATABASE'])
+       ->notEmpty();
 
 
 $monolog = new Logger('system');

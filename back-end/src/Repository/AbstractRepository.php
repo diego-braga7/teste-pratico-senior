@@ -100,28 +100,42 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Converte um registro de array em entidade.
-     * Deve ser implementado na subclasse para cada entidade específica.
      *
      * @param array $data
-     * @return object
+     * @return EntityInterface
      */
     protected function map(array $data): EntityInterface
     {
-        $class = $this->entityClass;
-        $ref   = new \ReflectionClass($class);
+        $class  = $this->entityClass;
+        $ref    = new \ReflectionClass($class);
         $entity = $ref->newInstanceWithoutConstructor();
-
+    
         foreach ($data as $column => $value) {
-            $method = 'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $column)));
-            if ($ref->hasMethod($method)) {
-                $entity->{$method}($value);
+            $methodName = 'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $column)));
+            if (! $ref->hasMethod($methodName)) {
+                continue;
             }
+    
+            $method   = $ref->getMethod($methodName);
+            $params   = $method->getParameters();
+            $arg      = $value;
+    
+            if (count($params) === 1) {
+                $paramType = $params[0]->getType();
+                if ($paramType && ! $paramType->isBuiltin()) {
+                    $typeName = $paramType->getName();
+                    if (is_subclass_of($typeName, \DateTimeInterface::class) || $typeName === \DateTimeInterface::class) {
+                        $arg = new $typeName($value);
+                    }
+                }
+            }
+    
+            $entity->{$methodName}($arg);
         }
-
+    
         return $entity;
     }
-
+    
     public function save(EntityInterface $entity): EntityInterface
     {
         $ref = new \ReflectionClass($entity);

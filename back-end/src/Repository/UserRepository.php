@@ -9,5 +9,7 @@ use Src\Entity\User;
 class UserRepository extends AbstractRepository
 {
     protected string $table = 'users';
+    
+    protected string $entityClass = User::class;
 
 }

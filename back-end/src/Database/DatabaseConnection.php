@@ -1,9 +1,11 @@
 <?php
+
 namespace Src\Database;
 
+use Dotenv\Exception\InvalidFileException;
 use PDO;
 use PDOException;
-
+use Src\LoggerFactory;
 
 class DatabaseConnection
 {
@@ -15,11 +17,11 @@ class DatabaseConnection
      */
     public function __construct()
     {
-        $host     = getenv('DB_HOST') ?: '127.0.0.1';
-        $db       = getenv('MYSQL_DATABASE') ?: '';
-        $user     = getenv('MYSQL_USER') ?: '';
-        $pass     = getenv('MYSQL_PASSWORD') ?: '';
-        $port     = getenv('DB_PORT') ?: '3306';
+        $host     = $_ENV['DB_HOST'] ?? getenv('DB_HOST');
+        $db     = $_ENV['MYSQL_DATABASE'] ?? getenv('MYSQL_DATABASE');
+        $user     = $_ENV['MYSQL_USER'] ?? getenv('MYSQL_USER');
+        $pass     = $_ENV['MYSQL_ROOT_PASSWORD'] ?? getenv('MYSQL_PASSWORD');
+        $port     = $_ENV['DB_PORT'] ?? getenv('MYSQL_PASSWORD');
         $charset  = 'utf8mb4';
 
         $dsn = sprintf(
@@ -39,7 +41,7 @@ class DatabaseConnection
         $this->pdo = new PDO($dsn, $user, $pass, $options);
     }
 
-    
+
     public function getConnection(): PDO
     {
         return $this->pdo;

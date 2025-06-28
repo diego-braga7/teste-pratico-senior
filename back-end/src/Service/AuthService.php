@@ -3,6 +3,7 @@
 namespace Src\Service;
 
 use InvalidArgumentException;
+use Src\Entity\User;
 use Src\Repository\RepositoryInterface;
 use Src\Validator\InterfaceValidator;
 
@@ -32,8 +33,6 @@ class AuthService
             throw new InvalidArgumentException('e-mail não encontrado no banco');
         }
 
-        //TODO alterar para senha já vir criptografada
-        // if (md5($senha) !== $storedHash) {
         if ($senha !== $storedHash) {
             throw new InvalidArgumentException('senha inválida');
         }
@@ -51,6 +50,12 @@ class AuthService
      */
     protected function getSavedPasswordHash(string $email): ?string
     {
-        return $this->repository->getByCollumn('email', $email);
+        /** @var User $user */
+        $user = $this->repository->getByCollumn('email', $email);
+        if(!$user){
+            return null;
+        }
+        return $user->getPasswordHash();
+
     }
 }

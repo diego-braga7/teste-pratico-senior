@@ -6,7 +6,6 @@ services:
       context: ./bd
       dockerfile: Dockerfile
     container_name: bd
-    # Carrega todas as vars definidas em back-end/.env
     env_file:
       - back-end/.env
     volumes:
