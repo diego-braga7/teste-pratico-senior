@@ -146,7 +146,13 @@ abstract class AbstractRepository implements RepositoryInterface
             if (str_starts_with($name, 'get') && $method->getNumberOfRequiredParameters() === 0) {
                 $prop = lcfirst(substr($name, 3));
                 $column = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $prop));
-                $params[$column] = $entity->{$name}();
+                $value  = $entity->{$name}();
+
+                if ($value instanceof \DateTimeInterface) {
+                    $value = $value->format('Y-m-d H:i:s');
+                }
+    
+                $params[$column] = $value;
             }
         }
 

@@ -7,55 +7,43 @@ use Src\Entity\User;
 use Src\Repository\RepositoryInterface;
 use Src\Validator\InterfaceValidator;
 
-class AuthService 
+class AuthService
 {
 
-    
-    public function __construct(private InterfaceValidator $validator, private RepositoryInterface $repository)
-    {
-    }
+    public function __construct(private InterfaceValidator $validator, private RepositoryInterface $repository) {}
 
     /**
      * @param string $email 
-     * @param string $senha 
+     * @param string $password 
      * @return string Basic 
      *
      * @throws InvalidArgumentException 
      */
-    public function login(string $email, string $senha): string
+    public function login(string $email, string $password): string
     {
         if (! $this->validator->validate(['email' => $email])) {
             throw new InvalidArgumentException('e-mail inválido.');
         }
 
-        $storedHash = $this->getSavedPasswordHash($email);
-        if (empty($storedHash)) {
+        $user = $this->getUSer($email);
+        if (empty($user)) {
             throw new InvalidArgumentException('e-mail não encontrado no banco');
         }
 
-        if ($senha !== $storedHash) {
+        if ($password !== $user->getPasswordHash()) {
             throw new InvalidArgumentException('senha inválida');
         }
 
-        $credentials = sprintf('%s:%s', $email, $senha);
+        $credentials = sprintf('%s:%s', $email, $password);
         $token = base64_encode($credentials);
 
         return sprintf('Basic %s', $token);
     }
 
-    /**
-     *
-     * @param string $email
-     * @return string|null The MD5-hashed password or null if not found.
-     */
-    protected function getSavedPasswordHash(string $email): ?string
+    public function getUSer(string $email): ?User
     {
-        /** @var User $user */
-        $user = $this->repository->getByCollumn('email', $email);
-        if(!$user){
-            return null;
-        }
-        return $user->getPasswordHash();
-
+        return $this->repository->getByCollumn('email', $email);
     }
+
+   
 }

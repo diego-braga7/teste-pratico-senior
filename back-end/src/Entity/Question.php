@@ -2,7 +2,7 @@
 namespace Src\Entity;
 
 
-class Question
+class Question implements EntityInterface
 {
     private ?int $id = null;
     private int $quizId;

@@ -1,6 +1,8 @@
 <?php
 namespace Src;
 
+use Src\Entity\User;
+
 class Request
 {
     public string $method;
@@ -9,6 +11,7 @@ class Request
     public array $body  = [];
     public array $params = [];
     public array $headers = [];
+    public ?User $user;
 
     private function __construct() {}
 
@@ -20,22 +23,18 @@ class Request
     {
         $req = new self();
 
-        // Método HTTP
         $req->method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-        // URI limpa (sem query string)
         $path = $_SERVER['REQUEST_URI'] ?? '/';
         $path = parse_url($path, PHP_URL_PATH);
         $req->uri = rtrim($path, '/') ?: '/';
 
-        // Captura todos os headers (inclui Authorization)
         if (function_exists('getallheaders')) {
             foreach (getallheaders() as $name => $value) {
                 $req->headers[$name] = $value;
             }
         }
 
-        // Fallback para servidores que não suportam getallheaders
         foreach ($_SERVER as $key => $value) {
             if (str_starts_with($key, 'HTTP_')) {
                 $name = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))));
@@ -47,11 +46,9 @@ class Request
             }
         }
 
-        // Query params (GET) — sanitizados
         $rawGet = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
         $req->query = self::sanitize($rawGet);
 
-        // Body (POST, PUT, PATCH)
         if (in_array($req->method, ['POST', 'PUT', 'PATCH'], true)) {
             $contentType = $req->headers['Content-Type'] ?? '';
             if (stripos($contentType, 'application/json') === 0) {

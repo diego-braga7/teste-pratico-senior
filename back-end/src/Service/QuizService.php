@@ -1,7 +1,10 @@
 <?php
+
 namespace Src\Service;
 
-use InvalidArgumentException;
+use Src\Entity\Quiz;
+use Src\Entity\User;
+use Src\Repository\RepositoryInterface;
 use Src\Validator\QuizValidatorInterface;
 
 
@@ -10,101 +13,36 @@ use Src\Validator\QuizValidatorInterface;
 
 class QuizService
 {
-    private array $quizzes = [];
-    private QuizValidatorInterface $validator;
 
-    public function __construct(QuizValidatorInterface $validator)
-    {
-        $this->validator = $validator;
-    }
+    public function __construct(private QuizValidatorInterface $validator, private RepositoryInterface $quizRepository, private QuestionService $questionService) {}
 
     /**
-     * Cria um novo quiz em memória.
      *
      * @param string $title
      * @param array<int, array{question: string, type: string, options: array<string>}> $questions
-     * @return array{id: string, title: string, questions: array}
+     * @return Quiz
      */
-    public function createQuiz(string $title, array $questions): array
+    public function createQuiz(User $user, string $title, array $questions): Quiz
     {
         $this->validator->validateTitle($title);
         $this->validator->validateQuestions($questions);
 
-        $id = $this->generateId();
-        $processed = $this->processQuestions($questions);
+        $quiz = $this->populateQuiz($user, trim($title));
 
-        $quiz = [
-            'id'        => $id,
-            'title'     => trim($title),
-            'questions' => $processed,
-        ];
+        /** @var Quiz $quiz */
+        $quiz = $this->quizRepository->save($quiz);
 
-        $this->quizzes[$id] = $quiz;
+        $this->questionService->save($quiz->getId(), $questions);
+
         return $quiz;
     }
 
-    /**
-     * Gera um ID único para quiz.
-     */
-    private function generateId(): string
+    private function populateQuiz(User $user, string $title): Quiz
     {
-        return uniqid('quiz_', true);
+        return new Quiz(
+            $title,
+            $user->getId()
+        );
     }
-
-    /**
-     * Processa todas as perguntas, delegando a cada pergunta o parse.
-     */
-    private function processQuestions(array $questions): array
-    {
-        $result = [];
-        foreach ($questions as $idx => $question) {
-            $result[] = $this->processQuestion($question, $idx);
-        }
-        return $result;
-    }
-
-    /**
-     * Processa e valida uma única pergunta.
-     */
-    private function processQuestion(array $question, int $idx): array
-    {
-        $questionTrim = trim($question['question']);
-        $type     = trim($question['type']);
-        $options  = array_map('trim',(array) $question['options']);
-
-        if ($this->requiresOptions($type) && count($options) < 2) {
-            throw new InvalidArgumentException("A pergunta '{$questionTrim}' exige pelo menos duas alternativas.");
-        }
-
-        return [
-            'question' => $questionTrim,
-            'type'     => $type,
-            'options'  => $options,
-        ];
-    }
-
-    /**
-     * Verifica se o tipo de pergunta exige alternativas.
-     */
-    private function requiresOptions(string $type): bool
-    {
-        $c = strtolower($type);
-        return in_array($c, ['multiple choice', 'múltipla escolha', 'checkbox', 'radio'], true);
-    }
-
-    /**
-     * Retorna todos os quizzes cadastrados.
-     */
-    public function getAll(): array
-    {
-        return array_values($this->quizzes);
-    }
-
-    /**
-     * Recupera um quiz pelo ID.
-     */
-    public function getQuiz(string $id): ?array
-    {
-        return $this->quizzes[$id] ?? null;
-    }
+    
 }

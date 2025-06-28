@@ -1,7 +1,7 @@
 <?php
 namespace Src\Entity;
 
-class Alternative
+class Alternative implements EntityInterface
 {
     private ?int $id = null;
     private int $questionId;

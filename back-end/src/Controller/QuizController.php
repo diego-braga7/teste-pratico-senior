@@ -2,8 +2,13 @@
 
 namespace Src\Controller;
 
+use Src\Repository\AlternativeRepository;
+use Src\Repository\QuestionRepository;
+use Src\Repository\QuizRepository;
 use Src\Request;
 use Src\Response;
+use Src\Service\AlternativeService;
+use Src\Service\QuestionService;
 use Src\Service\QuizService;
 use Src\Validator\QuizValidator;
 
@@ -13,11 +18,13 @@ class QuizController extends BaseController
 
     public function __construct()
     {
-        $this->service = new QuizService((new QuizValidator));
+        $alternativeService = new AlternativeService(new AlternativeRepository);
+        $questionService = new QuestionService(new QuizValidator, new QuestionRepository, $alternativeService);
+        $this->service = new QuizService(new QuizValidator, new QuizRepository, $questionService);
     }
     public function index(Request $req): Response
     {
-        $quizzes = $this->service->getAll();
+        $quizzes = [];
         if(empty($quiz)){
             return new Response(null,404);
         }
@@ -28,10 +35,10 @@ class QuizController extends BaseController
     {
         try {
             $data = $req->body;
-            $quiz = $this->service->createQuiz($data['title'], $data['questions']);
+            $quiz = $this->service->createQuiz($req->user,$data['title'], $data['questions']);
             return new Response([
                 'message' => 'Quiz created',
-                'id' => $quiz['id']
+                'id' => $quiz->getId()
             ], 201);
         } catch (\Throwable $th) {
             return new Response([
@@ -43,7 +50,7 @@ class QuizController extends BaseController
     public function show(Request $req): Response
     {
         $id = $req->params['id'];
-        $quiz = $this->service->getQuiz($id);
+        $quiz = null;
         if(empty($quiz)){
             return new Response(null,404);
         }

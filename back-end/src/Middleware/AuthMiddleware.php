@@ -4,9 +4,17 @@ namespace Src\Middleware;
 use Src\Request;
 use Src\Response;
 use Src\LoggerFactory;
+use Src\Repository\UserRepository;
+use Src\Service\AuthService;
+use Src\Validator\EmailValidator;
 
 class AuthMiddleware
 {
+    private AuthService $authService;
+
+    public function __construct() {
+        $this->authService = new AuthService(new EmailValidator, new UserRepository);
+    }
     public function handle(Request $req)
     {
         $logger = LoggerFactory::getLogger();
@@ -16,7 +24,7 @@ class AuthMiddleware
         ]);
 
         $authHeader = $req->headers['Authorization'] ?? '';
-        if (!$this->checkToken($authHeader)) {
+        if (!$this->checkToken($req)) {
             $logger->warning('AuthMiddleware: falha na autenticação Basic', [
                 'received' => $authHeader
             ]);
@@ -27,9 +35,10 @@ class AuthMiddleware
         $logger->info('AuthMiddleware: autenticação Basic bem-sucedida');
     }
 
-    private function checkToken(string $authHeader): bool
+    private function checkToken(Request $req): bool
     {
-        // Espera header no formato 'Basic base64(user:pass)'
+        $authHeader = $req->headers['Authorization'] ?? '';
+
         if (stripos($authHeader, 'Basic ') !== 0) {
             return false;
         }
@@ -40,13 +49,16 @@ class AuthMiddleware
             return false;
         }
 
-        [$user, $pass] = array_pad(explode(':', $decoded, 2), 2, null);
+        [$email, $pass] = array_pad(explode(':', $decoded, 2), 2, null);
 
-        // $envUser = getenv('BASIC_AUTH_USER') ?: '';
-        // $envPass = getenv('BASIC_AUTH_PASS') ?: '';
-        $envUser = 'diego@gmail.com.br';
-        $envPass = 'asajisa';
+        $user = $this->authService->getUSer($email);
 
-        return hash_equals($envUser, $user) && hash_equals($envPass, $pass);
+        if(!$user){
+            return false;
+        }
+
+        $req->user = $user;
+
+        return hash_equals($user->getPasswordHash(), $pass);
     }
 }

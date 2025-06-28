@@ -3,7 +3,7 @@ namespace Src\Entity;
 
 use DateTime;
 
-class Quiz
+class Quiz implements EntityInterface
 {
     private ?int $id = null;
     private string $title;
