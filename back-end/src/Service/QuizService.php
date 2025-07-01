@@ -44,5 +44,14 @@ class QuizService
             $user->getId()
         );
     }
-    
+
+    public function QuizExist(int $quizId): bool
+    {
+        return !($this->quizRepository->getById($quizId) == null);
+    }
+
+    public function getQuestionService(): QuestionService
+    {
+        return $this->questionService;
+    }
 }

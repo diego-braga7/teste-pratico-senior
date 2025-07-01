@@ -3,6 +3,8 @@
 namespace Src\Validator;
 
 use InvalidArgumentException;
+use Src\Entity\Question;
+use Src\LoggerFactory;
 use Src\Service\QuizService;
 
 /**
@@ -14,7 +16,7 @@ class LeadValidator implements LeadValidatorInterface
 
     public function validateQuizExists(string $quizId): void
     {
-        if ($this->quizService->getQuiz($quizId) === null) {
+        if (!$this->quizService->QuizExist($quizId)) {
             throw new InvalidArgumentException("Quiz com id '{$quizId}' não encontrado.");
         }
     }
@@ -28,32 +30,31 @@ class LeadValidator implements LeadValidatorInterface
 
     public function validateAnswers(string $quizId, array $answers): void
     {
-        $quiz = $this->quizService->getQuiz($quizId);
-        
-        $questions = $quiz['questions'];
+        /** @var Question[] $question */
+        $questions = $this->quizService->getQuestionService()->getQuestionByQuiz($quizId);
 
         if (count($answers) !== count($questions)) {
             throw new InvalidArgumentException('Número de respostas não corresponde ao número de perguntas.');
         }
 
-        foreach ($questions as $idx => $q) {
-            if (!array_key_exists($idx, $answers)) {
-                throw new InvalidArgumentException("Resposta para a pergunta {$idx} não fornecida.");
+        foreach ($questions as $question) {
+            if (!in_array($question->getId(), array_column($answers, 'questionId'))) {
+                throw new InvalidArgumentException("Resposta para a pergunta {$question->getId()} não fornecida.");
             }
 
-            $answer = $answers[$idx];
-            $type   = strtolower($q['type']);
-            $options= $q['options'];
+            LoggerFactory::getLogger()->info("resostas", $answers);
 
-            if (in_array($type, ['múltipla escolha', 'multiple choice', 'checkbox', 'radio'], true)) {
-                if (!is_string($answer) || !in_array($answer, $options, true)) {
-                    throw new InvalidArgumentException("Resposta inválida para a pergunta '{$q['question']}'.");
+            $answer = current(array_filter(array_map(function ($answer) use ($question) {
+                if ($answer['questionId'] == $question->getId()) {
+                    return $answer;
                 }
-            } else {
-                if (!is_string($answer) || trim($answer) === '') {
-                    throw new InvalidArgumentException("Resposta de texto para a pergunta '{$q['question']}' não pode ser vazia.");
-                }
+                return null;
+            }, $answers)));
+
+            if (!isset($answer['alternativeId']) && !isset($answer['answerText'])) {
+                throw new InvalidArgumentException("Resposta inválida.");
             }
+
         }
     }
 }

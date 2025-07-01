@@ -1,36 +1,36 @@
 <?php
+
 namespace Src\Service;
 
 use SplObserver;
 use SplSubject;
+use Src\Entity\Lead;
+use Src\Repository\LeadRepository;
 use Src\Validator\LeadValidatorInterface;
 
 class LeadService implements SplSubject
 {
-    private array $leads = [];
-    private LeadValidatorInterface $validator;
     private \SplObjectStorage $observers;
-    private array $lastLead = [];
+    private Lead $lead;
 
-    public function __construct(LeadValidatorInterface $validator)
+    public function __construct(private LeadValidatorInterface $validator, private LeadRepository $leadRepository, private LeadResponseService $leadResponseService)
     {
-        $this->validator = $validator;
         $this->observers = new \SplObjectStorage();
     }
 
-   
+
     public function attach(SplObserver $observer): void
     {
         $this->observers->attach($observer);
     }
 
-    
+
     public function detach(SplObserver $observer): void
     {
         $this->observers->detach($observer);
     }
 
-    
+
     public function notify(): void
     {
         foreach ($this->observers as $observer) {
@@ -45,52 +45,33 @@ class LeadService implements SplSubject
      * @param string $name
      * @param string $email
      * @param array<int, mixed> $answers
-     * @return array{id: string, quizId: string, name: string, email: string, answers: array}
+     * @return Lead{id: string, quizId: string, name: string, email: string, answers: array}
      */
-    public function submitLead(string $quizId, string $name, string $email, array $answers): array
+    public function submitLead(string $quizId, string $name, string $email, array $answers): Lead
     {
         $this->validator->validateQuizExists($quizId);
         $this->validator->validateEmailFormat($email);
         $this->validator->validateAnswers($quizId, $answers);
 
-        $id   = uniqid('lead_', true);
-        $lead = [
-            'id'      => $id,
-            'quizId'  => $quizId,
-            'name'    => trim($name),
-            'email'   => trim($email),
-            'answers' => $answers,
-        ];
+        /** @var ?Lead $lead */
+        $lead = $this->leadRepository->getByCollumn('email', $email);
+        if (!$lead) {
+            /** @var Lead $lead */
+            $lead = $this->leadRepository->save((
+                new Lead($name, $email)
+            ));
+        }
+        $this->lead = $lead;
 
-        $this->leads[$id] = $lead;
-        $this->lastLead   = $lead;
+        $this->leadResponseService->save($quizId, $lead->getId(), $answers);
 
         $this->notify();
 
         return $lead;
     }
 
-    /**
-     * Recupera o último lead submetido.
-     */
-    public function getLastSubmittedLead(): array
+    public function getLastSubmittedLead(): Lead
     {
-        return $this->lastLead;
-    }
-
-    /**
-     * Retorna todos os leads em memória.
-     */
-    public function getAllLeads(): array
-    {
-        return array_values($this->leads);
-    }
-
-    /**
-     * Recupera um lead pelo ID.
-     */
-    public function getLead(string $id): ?array
-    {
-        return $this->leads[$id] ?? null;
+        return $this->lead;
     }
 }

@@ -2,9 +2,11 @@
 
 namespace Src\Repository;
 
+use Monolog\Logger;
 use PDO;
 use Src\Database\DatabaseConnection;
 use Src\Entity\EntityInterface;
+use Src\LoggerFactory;
 
 abstract class AbstractRepository implements RepositoryInterface
 {
@@ -38,6 +40,12 @@ abstract class AbstractRepository implements RepositoryInterface
         return $data ? $this->map($data) : null;
     }
 
+    /**
+     *
+     * @param string $column
+     * @param integer|string|array $value
+     * @return EntityInterface|EntityInterface[]|null
+     */
     public function getByCollumn(string $column, int|string|array $value): EntityInterface|array|null
     {
         $column = "`" . str_replace("`", "``", $column) . "`";
@@ -46,16 +54,22 @@ abstract class AbstractRepository implements RepositoryInterface
             return $this->getValuesInArray($column, $value);
         }
 
-        $sql  = "SELECT * FROM `{$this->table}` WHERE {$column} = :value LIMIT 1";
+        $sql  = "SELECT * FROM `{$this->table}` WHERE {$column} = :value";
         $stmt = $this->pdo->prepare($sql);
 
         $type = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
         $stmt->bindValue(':value', $value, $type);
         $stmt->execute();
 
-        $data = $stmt->fetch();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (! $rows) {
+            return null;
+        }
+        if (count($rows) > 1) {
+            return array_map(fn(array $r) => $this->map($r), $rows);
+        }
 
-        return $data ? $this->map($data) : null;
+        return $this->map($rows[0]);
     }
 
     private function getValuesInArray(string $column, int|string|array $value)
@@ -109,17 +123,17 @@ abstract class AbstractRepository implements RepositoryInterface
         $class  = $this->entityClass;
         $ref    = new \ReflectionClass($class);
         $entity = $ref->newInstanceWithoutConstructor();
-    
+
         foreach ($data as $column => $value) {
             $methodName = 'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $column)));
             if (! $ref->hasMethod($methodName)) {
                 continue;
             }
-    
+
             $method   = $ref->getMethod($methodName);
             $params   = $method->getParameters();
             $arg      = $value;
-    
+
             if (count($params) === 1) {
                 $paramType = $params[0]->getType();
                 if ($paramType && ! $paramType->isBuiltin()) {
@@ -129,13 +143,13 @@ abstract class AbstractRepository implements RepositoryInterface
                     }
                 }
             }
-    
+
             $entity->{$methodName}($arg);
         }
-    
+
         return $entity;
     }
-    
+
     public function save(EntityInterface $entity): EntityInterface
     {
         $ref = new \ReflectionClass($entity);
@@ -151,7 +165,7 @@ abstract class AbstractRepository implements RepositoryInterface
                 if ($value instanceof \DateTimeInterface) {
                     $value = $value->format('Y-m-d H:i:s');
                 }
-    
+
                 $params[$column] = $value;
             }
         }
@@ -177,7 +191,7 @@ abstract class AbstractRepository implements RepositoryInterface
         $sets = [];
         foreach ($params as $col => $val) {
             if ($col === $this->primaryKey) continue;
-            $sets[] = sprintf('`%s` = :%s', $col, $val);
+            $sets[] = sprintf('`%s` = :%s', $col, $col);
         }
         $sql = sprintf(
             'UPDATE `%s` SET %s WHERE `%s` = :%s',

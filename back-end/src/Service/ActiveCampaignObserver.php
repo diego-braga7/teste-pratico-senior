@@ -3,11 +3,8 @@ namespace Src\Service;
 
 use SplSubject;
 use SplObserver;
-use InvalidArgumentException;
+use Src\Repository\LeadRepository;
 
-/**
- * Observador que envia lead para o ActiveCampaign após submissão usando SplObserver.
- */
 class ActiveCampaignObserver implements SplObserver
 {
     public function update(SplSubject $subject): void
@@ -17,10 +14,8 @@ class ActiveCampaignObserver implements SplObserver
         }
 
         $data  = $subject->getLastSubmittedLead();
-        $name  = $data['name']  ?? '';
-        $email = $data['email'] ?? '';
 
-        $acService = new ActiveCampaignService();
-        $acService->addContact($name, $email);
+        $acService = new ActiveCampaignService(new LeadRepository);
+        $acService->addContact($data->getName(), $data->getEmail());
     }
 }

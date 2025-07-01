@@ -25,9 +25,7 @@ class QuestionService
         $this->processQuestions($quizId, $questions);
     }
 
-    /**
-     * Processa todas as perguntas, delegando a cada pergunta o parse.
-     */
+    
     private function processQuestions(int $quizId, array $questions): void
     {
         foreach ($questions as $idx => $question) {
@@ -35,9 +33,7 @@ class QuestionService
         }
     }
 
-    /**
-     * Processa e valida uma única pergunta.
-     */
+    
     private function processQuestion(int $quizId, array $question, int $idx): void
     {
         $questionTrim = trim($question['question']);
@@ -64,5 +60,15 @@ class QuestionService
     {
         $type = strtolower($type);
         return in_array($type, ['multiple choice', 'select', 'checkbox', 'radio'], true);
+    }
+    
+    /**
+     * Undocumented function
+     *
+     * @param integer $quizId
+     * @return null|Question[]
+     */
+    public function getQuestionByQuiz(int $quizId): ?array{
+        return $this->repository->getByCollumn('quiz_id',$quizId);
     }
 }

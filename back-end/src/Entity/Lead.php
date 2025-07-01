@@ -1,13 +1,15 @@
 <?php
+
 namespace Src\Entity;
 
 use DateTime;
 
-class Lead
+class Lead implements EntityInterface
 {
     private ?int $id = null;
     private string $name;
     private string $email;
+    private int $sent = 0;
     private DateTime $createdAt;
 
     public function __construct(string $name, string $email)
@@ -17,15 +19,49 @@ class Lead
         $this->createdAt = new DateTime();
     }
 
-    public function getId(): ?int { return $this->id; }
-    public function setId(int $id): void { $this->id = $id; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+    public function setId(int $id): void
+    {
+        $this->id = $id;
+    }
 
-    public function getName(): string { return $this->name; }
-    public function setName(string $name): void { $this->name = $name; }
+    public function getName(): string
+    {
+        return $this->name;
+    }
+    public function setName(string $name): void
+    {
+        $this->name = $name;
+    }
 
-    public function getEmail(): string { return $this->email; }
-    public function setEmail(string $email): void { $this->email = $email; }
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+    public function setEmail(string $email): void
+    {
+        $this->email = $email;
+    }
 
-    public function getCreatedAt(): DateTime { return $this->createdAt; }
-    public function setCreatedAt(DateTime $dt): void { $this->createdAt = $dt; }
+    public function getCreatedAt(): DateTime
+    {
+        return $this->createdAt;
+    }
+    public function setCreatedAt(DateTime $dt): void
+    {
+        $this->createdAt = $dt;
+    }
+
+    public function setSent(int $int)
+    {
+        $this->sent = $int;
+    }
+
+    public function getSent(): int
+    {
+        return $this->sent;
+    }
 }

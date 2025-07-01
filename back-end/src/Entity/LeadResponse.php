@@ -3,7 +3,7 @@ namespace Src\Entity;
 
 use DateTime;
 
-class LeadResponse
+class LeadResponse implements EntityInterface
 {
     private ?int $id = null;
     private int $leadId;
