@@ -11,14 +11,14 @@ class QuizValidator implements QuizValidatorInterface
     {
         $title = trim($title);
         if ($title === '') {
-            throw new InvalidArgumentException('Título do quiz não pode ser vazio.');
+            throw new InvalidArgumentException('Título do quiz não pode ser vazio.',422);
         }
     }
 
     public function validateQuestions(array $questions): void
     {
         if (empty($questions)) {
-            throw new InvalidArgumentException('Deve existir ao menos uma pergunta.');
+            throw new InvalidArgumentException('Deve existir ao menos uma pergunta.', 422);
         }
 
         foreach ($questions as $idx => $question) {
@@ -27,7 +27,7 @@ class QuizValidator implements QuizValidatorInterface
                 || !is_string($question['type'])
                 || !is_array($question['options'])
             ) {
-                throw new InvalidArgumentException("Formato inválido na pergunta no índice {$idx}.");
+                throw new InvalidArgumentException("Formato inválido na pergunta no índice {$idx}.", 422);
             }
         }
     }

@@ -40,4 +40,6 @@ interface RepositoryInterface
      * @param int $id
      */
     public function delete(int $id): void;
+
+    public function query(string $sql, array $params = []): array;
 }

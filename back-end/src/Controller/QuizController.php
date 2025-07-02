@@ -24,11 +24,14 @@ class QuizController extends BaseController
     }
     public function index(Request $req): Response
     {
-        $quizzes = [];
-        if(empty($quiz)){
-            return new Response(null,404);
+        try {
+            $quizzes = $this->service->getAll();
+            return new Response($quizzes, 201);
+        } catch (\Throwable $th) {
+            return new Response([
+                'error' => $th->getMessage()
+            ], $th->getCode());
         }
-        return new Response($quizzes);
     }
 
     public function store(Request $req): Response
@@ -43,18 +46,21 @@ class QuizController extends BaseController
         } catch (\Throwable $th) {
             return new Response([
                 'error' => $th->getMessage()
-            ], 422);
+            ], $th->getCode());
         }
     }
 
     public function show(Request $req): Response
     {
         $id = $req->params['id'];
-        $quiz = null;
-        if(empty($quiz)){
-            return new Response(null,404);
+        try {
+            $quizzes = $this->service->getCompleteQuiz($id);
+            return new Response($quizzes, 200);
+        } catch (\Throwable $th) {
+            return new Response([
+                'error' => $th->getMessage()
+            ], $th->getCode());
         }
-        return new Response($quiz);
     }
 
     

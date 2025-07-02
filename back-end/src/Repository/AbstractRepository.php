@@ -213,4 +213,11 @@ abstract class AbstractRepository implements RepositoryInterface
 
         $stmt->execute();
     }
+
+    public function query(string $sql, array $params = []): array
+    {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

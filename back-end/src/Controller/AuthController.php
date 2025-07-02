@@ -19,17 +19,17 @@ class AuthController extends BaseController
     }
     public function login(Request $request)
     {
-        // try {
+        try {
             $email = $request->body['email'] ?? '';
             $senha = $request->body['senha'] ?? '';
             
             return new Response([
                 'token' => $this->service->login($email, $senha)
             ]);
-        // } catch (\Throwable $th) {
-        //     return new Response([
-        //         'error' => $th->getMessage()
-        //     ], 401);
-        // }
+        } catch (\Throwable $th) {
+            return new Response([
+                'error' => $th->getMessage()
+            ], $th->getCode());
+        }
     }
 }

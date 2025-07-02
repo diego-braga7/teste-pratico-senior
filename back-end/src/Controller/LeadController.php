@@ -36,13 +36,13 @@ class LeadController extends BaseController
     }
     public function submit(Request $req): Response
     {
-        // try {
+        try {
             $body   = $req->body;
             $this->service->submitLead($body['quizId'], $body['name'], $body['email'], $body['responses']);
 
             return new Response(['message' => 'Lead enviado'], 201);
-        // } catch (\Throwable $th) {
-        //     return new Response(['error' => $th->getMessage()], 500);
-        // }
+        } catch (\Throwable $th) {
+            return new Response(['error' => $th->getMessage()], $th->getCode());
+        }
     }
 }

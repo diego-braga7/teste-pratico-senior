@@ -17,14 +17,14 @@ class LeadValidator implements LeadValidatorInterface
     public function validateQuizExists(string $quizId): void
     {
         if (!$this->quizService->QuizExist($quizId)) {
-            throw new InvalidArgumentException("Quiz com id '{$quizId}' não encontrado.");
+            throw new InvalidArgumentException("Quiz com id '{$quizId}' não encontrado.", 404);
         }
     }
 
     public function validateEmailFormat(string $email): void
     {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException("E-mail '{$email}' com formato inválido.");
+            throw new InvalidArgumentException("E-mail '{$email}' com formato inválido.", 422);
         }
     }
 
@@ -34,15 +34,14 @@ class LeadValidator implements LeadValidatorInterface
         $questions = $this->quizService->getQuestionService()->getQuestionByQuiz($quizId);
 
         if (count($answers) !== count($questions)) {
-            throw new InvalidArgumentException('Número de respostas não corresponde ao número de perguntas.');
+            throw new InvalidArgumentException('Número de respostas não corresponde ao número de perguntas.', 422);
         }
 
         foreach ($questions as $question) {
             if (!in_array($question->getId(), array_column($answers, 'questionId'))) {
-                throw new InvalidArgumentException("Resposta para a pergunta {$question->getId()} não fornecida.");
+                throw new InvalidArgumentException("Resposta para a pergunta {$question->getId()} não fornecida.", 422);
             }
 
-            LoggerFactory::getLogger()->info("resostas", $answers);
 
             $answer = current(array_filter(array_map(function ($answer) use ($question) {
                 if ($answer['questionId'] == $question->getId()) {
@@ -52,7 +51,7 @@ class LeadValidator implements LeadValidatorInterface
             }, $answers)));
 
             if (!isset($answer['alternativeId']) && !isset($answer['answerText'])) {
-                throw new InvalidArgumentException("Resposta inválida.");
+                throw new InvalidArgumentException("Resposta inválida.", 422);
             }
 
         }
